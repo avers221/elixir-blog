@@ -87,6 +87,9 @@ defmodule BlogWeb do
       # Core UI components
       import BlogWeb.CoreComponents
 
+      # Site-wide helpers (site name, reading time)
+      import BlogWeb.Site
+
       # Common modules used in templates
       alias Phoenix.LiveView.JS
       alias BlogWeb.Layouts

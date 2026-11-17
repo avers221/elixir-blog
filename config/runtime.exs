@@ -6,6 +6,9 @@ import Dotenvy
 # The non-bang `source/2` tolerates a missing file (e.g. in prod releases).
 source([".env", System.get_env()])
 
+# Human-readable site name, changeable via BLOG_NAME (requires restart).
+config :blog, :site_name, env!("BLOG_NAME", :string!, "Blog")
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration
