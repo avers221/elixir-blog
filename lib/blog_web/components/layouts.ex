@@ -5,6 +5,8 @@ defmodule BlogWeb.Layouts do
   """
   use BlogWeb, :html
 
+  alias Blog.Accounts.User
+
   # Embed all files in layouts/* within this module.
   # The default root.html.heex file contains the HTML
   # skeleton of your application, namely HTML headers
@@ -37,26 +39,40 @@ defmodule BlogWeb.Layouts do
     ~H"""
     <header class="navbar px-4 sm:px-6 lg:px-8">
       <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
+        <a href={~p"/"} class="flex w-fit items-center gap-2">
           <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
+          <span class="text-sm font-semibold">Blog</span>
         </a>
       </div>
       <div class="flex-none">
-        <ul class="flex px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
+        <ul class="flex items-center space-x-1 px-1 sm:space-x-3">
+          <%= if @current_scope && @current_scope.user do %>
+            <li class="hidden items-center gap-2 sm:flex">
+              <span class="max-w-48 truncate text-sm text-base-content/70">
+                {@current_scope.user.email}
+              </span>
+              <span :if={User.admin?(@current_scope.user)} class="badge badge-primary badge-sm">
+                admin
+              </span>
+            </li>
+            <li>
+              <.link href={~p"/users/settings"} class="btn btn-ghost btn-sm">Settings</.link>
+            </li>
+            <li>
+              <.link href={~p"/users/log-out"} method="delete" class="btn btn-ghost btn-sm">
+                Log out
+              </.link>
+            </li>
+          <% else %>
+            <li>
+              <.link href={~p"/users/log-in"} class="btn btn-ghost btn-sm">Log in</.link>
+            </li>
+            <li>
+              <.link href={~p"/users/register"} class="btn btn-primary btn-sm">Register</.link>
+            </li>
+          <% end %>
           <li>
             <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://phoenix.hexdocs.pm/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
           </li>
         </ul>
       </div>

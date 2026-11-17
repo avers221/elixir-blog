@@ -1,8 +1,8 @@
-<Layouts.app flash={@flash}>
+<Layouts.app flash={@flash} current_scope={@current_scope}>
   <.header>
     Listing Posts
     <:actions>
-      <.button href={~p"/posts/new"}>
+      <.button :if={@current_scope} href={~p"/posts/new"}>
         <.icon name="hero-plus" /> New Post
       </.button>
     </:actions>
@@ -16,8 +16,11 @@
         Write your first post — it supports Markdown.
       </p>
       <div class="mt-6">
-        <.button variant="primary" href={~p"/posts/new"}>
+        <.button :if={@current_scope} variant="primary" href={~p"/posts/new"}>
           <.icon name="hero-plus" /> Write your first post
+        </.button>
+        <.button :if={!@current_scope} variant="primary" href={~p"/users/register"}>
+          Register to write posts
         </.button>
       </div>
     </div>
@@ -29,6 +32,11 @@
       <:col :let={post} label="Preview">
         <span class="text-base-content/70">{body_preview(post.body)}</span>
       </:col>
+      <:col :let={post} label="Author">
+        <span class="text-base-content/70">
+          {if post.user, do: post.user.email, else: "—"}
+        </span>
+      </:col>
       <:col :let={post} label="Created">
         <span class="whitespace-nowrap text-base-content/70">
           {Calendar.strftime(post.inserted_at, "%b %d, %Y")}
@@ -38,12 +46,12 @@
         <div class="sr-only">
           <.link navigate={~p"/posts/#{post}"}>Show</.link>
         </div>
-        <.link navigate={~p"/posts/#{post}/edit"}>Edit</.link>
-      </:action>
-      <:action :let={post}>
-        <.link href={~p"/posts/#{post}"} method="delete" data-confirm="Are you sure?">
-          Delete
-        </.link>
+        <div :if={Posts.can_manage_post?(@current_scope, post)} class="flex items-center gap-2">
+          <.link navigate={~p"/posts/#{post}/edit"}>Edit</.link>
+          <.link href={~p"/posts/#{post}"} method="delete" data-confirm="Are you sure?">
+            Delete
+          </.link>
+        </div>
       </:action>
     </.table>
   <% end %>

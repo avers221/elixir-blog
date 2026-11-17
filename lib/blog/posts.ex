@@ -6,11 +6,13 @@ defmodule Blog.Posts do
   import Ecto.Query, warn: false
   alias Blog.Repo
 
+  alias Blog.Accounts.Scope
+  alias Blog.Accounts.User
   alias Blog.Posts.Post
   alias Blog.Posts.Comment
 
   @doc """
-  Returns the list of posts.
+  Returns the list of posts, newest first, with authors preloaded.
 
   ## Examples
 
@@ -19,11 +21,11 @@ defmodule Blog.Posts do
 
   """
   def list_posts do
-    Repo.all(from(p in Post, order_by: [desc: p.inserted_at, desc: p.id]))
+    Repo.all(from(p in Post, order_by: [desc: p.inserted_at, desc: p.id], preload: [:user]))
   end
 
   @doc """
-  Gets a single post.
+  Gets a single post with its author preloaded.
 
   Raises `Ecto.NoResultsError` if the Post does not exist.
 
@@ -36,22 +38,22 @@ defmodule Blog.Posts do
       ** (Ecto.NoResultsError)
 
   """
-  def get_post!(id), do: Repo.get!(Post, id)
+  def get_post!(id), do: Post |> Repo.get!(id) |> Repo.preload(:user)
 
   @doc """
-  Creates a post.
+  Creates a post owned by the user in the given scope.
 
   ## Examples
 
-      iex> create_post(%{field: value})
+      iex> create_post(scope, %{field: value})
       {:ok, %Post{}}
 
-      iex> create_post(%{field: bad_value})
+      iex> create_post(scope, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_post(attrs) do
-    %Post{}
+  def create_post(%Scope{user: %User{} = user}, attrs) do
+    %Post{user_id: user.id}
     |> Post.changeset(attrs)
     |> Repo.insert()
   end
@@ -91,6 +93,28 @@ defmodule Blog.Posts do
   end
 
   @doc """
+  Checks whether the scope's user may edit or delete the post.
+
+  Only the post author or an admin can manage a post.
+  """
+  def can_manage_post?(%Scope{user: %User{} = user}, %Post{} = post) do
+    post.user_id == user.id or User.admin?(user)
+  end
+
+  def can_manage_post?(_scope, _post), do: false
+
+  @doc """
+  Checks whether the scope's user may delete the comment.
+
+  The comment author, the post author and admins can delete a comment.
+  """
+  def can_delete_comment?(%Scope{user: %User{} = user}, %Comment{} = comment, %Post{} = post) do
+    comment.user_id == user.id or post.user_id == user.id or User.admin?(user)
+  end
+
+  def can_delete_comment?(_scope, _comment, _post), do: false
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking post changes.
 
   ## Examples
@@ -104,7 +128,7 @@ defmodule Blog.Posts do
   end
 
   @doc """
-  Returns the list of comments for a post, oldest first.
+  Returns the list of comments for a post, oldest first, with authors preloaded.
 
   ## Examples
 
@@ -116,7 +140,8 @@ defmodule Blog.Posts do
     Repo.all(
       from(c in Comment,
         where: c.post_id == ^post.id,
-        order_by: [asc: c.inserted_at, asc: c.id]
+        order_by: [asc: c.inserted_at, asc: c.id],
+        preload: [:user]
       )
     )
   end
@@ -129,16 +154,16 @@ defmodule Blog.Posts do
   def get_comment!(id), do: Repo.get!(Comment, id)
 
   @doc """
-  Creates a comment attached to the given post.
+  Creates a comment attached to the given post, owned by the scope's user.
 
   ## Examples
 
-      iex> create_comment(post, %{body: "nice post"})
+      iex> create_comment(scope, post, %{body: "nice post"})
       {:ok, %Comment{}}
 
   """
-  def create_comment(%Post{} = post, attrs) do
-    %Comment{post_id: post.id}
+  def create_comment(%Scope{user: %User{} = user}, %Post{} = post, attrs) do
+    %Comment{post_id: post.id, user_id: user.id}
     |> Comment.changeset(attrs)
     |> Repo.insert()
   end

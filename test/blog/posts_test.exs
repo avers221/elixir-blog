@@ -7,12 +7,15 @@ defmodule Blog.PostsTest do
     alias Blog.Posts.Post
 
     import Blog.PostsFixtures
+    import Blog.AccountsFixtures
 
     @invalid_attrs %{title: nil, body: nil}
 
-    test "list_posts/0 returns all posts" do
+    test "list_posts/0 returns all posts with authors preloaded" do
       post = post_fixture()
-      assert Posts.list_posts() == [post]
+
+      assert [%Post{title: "some title", user: %Blog.Accounts.User{}}] = Posts.list_posts()
+      assert Posts.list_posts() |> Enum.map(& &1.id) == [post.id]
     end
 
     test "list_posts/0 orders posts newest first" do
@@ -25,19 +28,42 @@ defmodule Blog.PostsTest do
 
     test "get_post!/1 returns the post with given id" do
       post = post_fixture()
-      assert Posts.get_post!(post.id) == post
+
+      assert %Post{user: %Blog.Accounts.User{}} = Posts.get_post!(post.id)
+      assert Posts.get_post!(post.id).id == post.id
     end
 
-    test "create_post/1 with valid data creates a post" do
+    test "create_post/2 with valid data creates a post owned by the scope user" do
+      user = user_fixture()
       valid_attrs = %{title: "some title", body: "some body"}
 
-      assert {:ok, %Post{} = post} = Posts.create_post(valid_attrs)
+      assert {:ok, %Post{} = post} =
+               Posts.create_post(Blog.Accounts.Scope.for_user(user), valid_attrs)
+
       assert post.title == "some title"
       assert post.body == "some body"
+      assert post.user_id == user.id
     end
 
-    test "create_post/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Posts.create_post(@invalid_attrs)
+    test "create_post/2 ignores user_id in attrs" do
+      other_user = user_fixture()
+      user = user_fixture()
+
+      assert {:ok, %Post{} = post} =
+               Posts.create_post(Blog.Accounts.Scope.for_user(user), %{
+                 title: "some title",
+                 body: "some body",
+                 user_id: other_user.id
+               })
+
+      assert post.user_id == user.id
+    end
+
+    test "create_post/2 with invalid data returns error changeset" do
+      user = user_fixture()
+
+      assert {:error, %Ecto.Changeset{}} =
+               Posts.create_post(Blog.Accounts.Scope.for_user(user), @invalid_attrs)
     end
 
     test "update_post/2 with valid data updates the post" do
@@ -52,7 +78,7 @@ defmodule Blog.PostsTest do
     test "update_post/2 with invalid data returns error changeset" do
       post = post_fixture()
       assert {:error, %Ecto.Changeset{}} = Posts.update_post(post, @invalid_attrs)
-      assert post == Posts.get_post!(post.id)
+      assert Posts.get_post!(post.id).id == post.id
     end
 
     test "delete_post/1 deletes the post" do
@@ -67,15 +93,50 @@ defmodule Blog.PostsTest do
     end
   end
 
+  describe "posts authorization" do
+    alias Blog.Posts.Post
+
+    import Blog.PostsFixtures
+    import Blog.AccountsFixtures
+
+    test "can_manage_post?/2 is true for the author" do
+      user = user_fixture()
+      post = post_fixture(%{user: user})
+
+      assert Posts.can_manage_post?(Blog.Accounts.Scope.for_user(user), post)
+    end
+
+    test "can_manage_post?/2 is true for an admin" do
+      admin = admin_user_fixture()
+      post = post_fixture()
+
+      assert Posts.can_manage_post?(Blog.Accounts.Scope.for_user(admin), post)
+    end
+
+    test "can_manage_post?/2 is false for another user" do
+      user = user_fixture()
+      post = post_fixture()
+
+      refute Posts.can_manage_post?(Blog.Accounts.Scope.for_user(user), post)
+    end
+
+    test "can_manage_post?/2 is false for an anonymous scope" do
+      post = post_fixture()
+
+      refute Posts.can_manage_post?(nil, post)
+    end
+  end
+
   describe "comments" do
     alias Blog.Posts.Comment
 
     import Blog.PostsFixtures
+    import Blog.AccountsFixtures
 
     @invalid_comment_attrs %{body: nil}
-    @valid_comment_attrs %{author: "some author", body: "some body"}
+    @valid_comment_attrs %{body: "some body"}
 
-    test "list_comments/1 returns post comments oldest first" do
+    test "list_comments/1 returns post comments oldest first with authors preloaded" do
       post = post_fixture()
       _second = comment_fixture(post, %{body: "second"})
       _first = comment_fixture(post, %{body: "first"})
@@ -92,29 +153,32 @@ defmodule Blog.PostsTest do
       assert Posts.list_comments(other_post) == []
     end
 
-    test "create_comment/2 with valid data creates a comment" do
+    test "create_comment/3 with valid data creates a comment owned by the scope user" do
+      user = user_fixture()
       post = post_fixture()
 
       assert {:ok, %Comment{} = comment} =
-               Posts.create_comment(post, @valid_comment_attrs)
+               Posts.create_comment(
+                 Blog.Accounts.Scope.for_user(user),
+                 post,
+                 @valid_comment_attrs
+               )
 
-      assert comment.author == "some author"
       assert comment.body == "some body"
       assert comment.post_id == post.id
+      assert comment.user_id == user.id
     end
 
-    test "create_comment/2 allows nil author" do
-      post = post_fixture()
-
-      assert {:ok, %Comment{author: nil}} =
-               Posts.create_comment(post, %{body: "anonymous"})
-    end
-
-    test "create_comment/2 with invalid data returns error changeset" do
+    test "create_comment/3 with invalid data returns error changeset" do
+      user = user_fixture()
       post = post_fixture()
 
       assert {:error, %Ecto.Changeset{}} =
-               Posts.create_comment(post, @invalid_comment_attrs)
+               Posts.create_comment(
+                 Blog.Accounts.Scope.for_user(user),
+                 post,
+                 @invalid_comment_attrs
+               )
     end
 
     test "delete_comment/1 deletes the comment" do
@@ -129,6 +193,52 @@ defmodule Blog.PostsTest do
       post = post_fixture()
       comment = comment_fixture(post)
       assert %Ecto.Changeset{} = Posts.change_comment(comment)
+    end
+  end
+
+  describe "comments authorization" do
+    alias Blog.Posts.Comment
+
+    import Blog.PostsFixtures
+    import Blog.AccountsFixtures
+
+    test "can_delete_comment?/3 is true for the comment author" do
+      user = user_fixture()
+      post = post_fixture()
+      comment = comment_fixture(post, %{user: user})
+
+      assert Posts.can_delete_comment?(Blog.Accounts.Scope.for_user(user), comment, post)
+    end
+
+    test "can_delete_comment?/3 is true for the post author" do
+      user = user_fixture()
+      post = post_fixture(%{user: user})
+      comment = comment_fixture(post)
+
+      assert Posts.can_delete_comment?(Blog.Accounts.Scope.for_user(user), comment, post)
+    end
+
+    test "can_delete_comment?/3 is true for an admin" do
+      admin = admin_user_fixture()
+      post = post_fixture()
+      comment = comment_fixture(post)
+
+      assert Posts.can_delete_comment?(Blog.Accounts.Scope.for_user(admin), comment, post)
+    end
+
+    test "can_delete_comment?/3 is false for another user" do
+      user = user_fixture()
+      post = post_fixture()
+      comment = comment_fixture(post)
+
+      refute Posts.can_delete_comment?(Blog.Accounts.Scope.for_user(user), comment, post)
+    end
+
+    test "can_delete_comment?/3 is false for an anonymous scope" do
+      post = post_fixture()
+      comment = comment_fixture(post)
+
+      refute Posts.can_delete_comment?(nil, comment, post)
     end
   end
 end

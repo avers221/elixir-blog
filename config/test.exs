@@ -1,5 +1,8 @@
 import Config
 
+# Only in tests, remove the complexity from the password hashing algorithm
+config :bcrypt_elixir, :log_rounds, 1
+
 # Database connection settings live in `config/runtime.exs` and are read
 # from the `.env` file (shared with docker-compose) via Dotenvy.
 # The test database is `blog_test` + optional MIX_TEST_PARTITION suffix.

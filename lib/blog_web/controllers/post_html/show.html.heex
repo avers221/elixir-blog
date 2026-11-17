@@ -1,4 +1,4 @@
-<Layouts.app flash={@flash}>
+<Layouts.app flash={@flash} current_scope={@current_scope}>
   <.header>
     {@post.title}
     <:subtitle>Published {@post.inserted_at |> Calendar.strftime("%B %d, %Y")}</:subtitle>
@@ -6,10 +6,15 @@
       <.button href={~p"/posts"}>
         <.icon name="hero-arrow-left" />
       </.button>
-      <.button variant="primary" navigate={~p"/posts/#{@post}/edit"}>
+      <.button
+        :if={Posts.can_manage_post?(@current_scope, @post)}
+        variant="primary"
+        navigate={~p"/posts/#{@post}/edit"}
+      >
         <.icon name="hero-pencil-square" /> Edit
       </.button>
       <.link
+        :if={Posts.can_manage_post?(@current_scope, @post)}
         href={~p"/posts/#{@post}"}
         method="delete"
         data-confirm="Are you sure?"
@@ -34,12 +39,13 @@
           class="rounded-box border border-base-300 bg-base-200 p-4 transition-colors hover:border-base-300/80"
         >
           <div class="flex items-center justify-between gap-4">
-            <span class="font-medium">{comment.author || "Anonymous"}</span>
+            <span class="font-medium">{Comment.author_name(comment)}</span>
             <div class="flex items-center gap-3 text-xs">
               <span class="text-base-content/60">
                 {Calendar.strftime(comment.inserted_at, "%b %d, %Y")}
               </span>
               <.link
+                :if={Posts.can_delete_comment?(@current_scope, comment, @post)}
                 href={~p"/posts/#{@post}/comments/#{comment}"}
                 method="delete"
                 data-confirm="Delete this comment?"
@@ -55,19 +61,32 @@
     </div>
 
     <div class="mt-8 rounded-box border border-base-300 bg-base-200 p-6">
-      <h3 class="font-semibold">Add a comment</h3>
-      <.form
-        for={@comment_form}
-        id="comment-form"
-        action={~p"/posts/#{@post}/comments"}
-        class="mt-4"
-      >
-        <.input field={@comment_form[:author]} type="text" label="Name (optional)" />
-        <.input field={@comment_form[:body]} type="textarea" label="Comment" rows={4} />
-        <div class="mt-4">
-          <.button variant="primary">Add comment</.button>
-        </div>
-      </.form>
+      <%= if @current_scope do %>
+        <h3 class="font-semibold">Add a comment</h3>
+        <.form
+          for={@comment_form}
+          id="comment-form"
+          action={~p"/posts/#{@post}/comments"}
+          class="mt-4"
+        >
+          <.input field={@comment_form[:body]} type="textarea" label="Comment" rows={4} />
+          <div class="mt-4">
+            <.button variant="primary">Add comment</.button>
+          </div>
+        </.form>
+      <% else %>
+        <h3 class="font-semibold">Add a comment</h3>
+        <p class="mt-2 text-sm text-base-content/70">
+          <.link href={~p"/users/log-in"} class="link link-hover font-medium text-primary">
+            Log in
+          </.link>
+          or
+          <.link href={~p"/users/register"} class="link link-hover font-medium text-primary">
+            register
+          </.link>
+          to join the discussion.
+        </p>
+      <% end %>
     </div>
   </section>
 </Layouts.app>

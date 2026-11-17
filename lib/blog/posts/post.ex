@@ -6,6 +6,8 @@ defmodule Blog.Posts.Post do
     field :title, :string
     field :body, :string
 
+    belongs_to :user, Blog.Accounts.User
+
     timestamps(type: :utc_datetime)
   end
 
