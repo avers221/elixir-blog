@@ -4,8 +4,9 @@
 # Environment files with database credentials (shared with docker-compose)
 /.env
 
-# Docker volumes (Postgres data, pgAdmin data)
+# Docker volume (PostgreSQL data)
 /pgsql/
+/backups/
 /pgadmin-data/
 
 # If you run "mix test --cover", coverage assets end up here.
@@ -37,8 +38,12 @@ blog-*.tar
 
 # Ignore digested assets cache.
 /priv/static/cache_manifest.json
+/priv/static/*.ico
+/priv/static/*.txt
+/priv/static/*.txt.gz
+/priv/static/images/*-*.svg
+/priv/static/images/*.svg.gz
 
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
-

@@ -73,18 +73,26 @@ end
 
 if config_env() == :prod do
   database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
+    case env!("DATABASE_URL", :string, nil) do
+      nil ->
+        username = URI.encode(env!("DB_USERNAME", :string!, "postgres"))
+        password = URI.encode(env!("DB_PASSWORD", :string!, "postgres"))
+        hostname = env!("DB_HOSTNAME", :string!, "localhost")
+        port = env!("DB_PORT", :integer, 5432)
+        database = URI.encode(env!("DB_DATABASE", :string!, "blog_prod"))
+
+        "ecto://#{username}:#{password}@#{hostname}:#{port}/#{database}"
+
+      database_url ->
+        database_url
+    end
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
   config :blog, Blog.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    pool_size: env!("POOL_SIZE", :integer, env!("DB_POOL_SIZE", :integer, 10)),
     # For machines with several cores, consider starting multiple pools of `pool_size`
     # pool_count: 4,
     socket_options: maybe_ipv6
@@ -94,14 +102,16 @@ if config_env() == :prod do
   # want to use a different value for prod and you most likely don't want
   # to check this value into version control, so we use an environment
   # variable instead.
-  secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
-      raise """
-      environment variable SECRET_KEY_BASE is missing.
-      You can generate one by calling: mix phx.gen.secret
-      """
+  secret_key_base = env!("SECRET_KEY_BASE", :string!, nil)
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host = env!("PHX_HOST", :string!, "example.com")
+  listen_ip = env!("PHX_LISTEN_IP", :string, "127.0.0.1")
+
+  listen_ip =
+    case :inet.parse_address(String.to_charlist(listen_ip)) do
+      {:ok, address} -> address
+      {:error, _} -> raise "PHX_LISTEN_IP must be an IPv4 or IPv6 address"
+    end
 
   config :blog, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
@@ -112,7 +122,7 @@ if config_env() == :prod do
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
       # See the documentation on https://bandit.hexdocs.pm/Bandit.html#t:options/0
       # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-      ip: {0, 0, 0, 0, 0, 0, 0, 0}
+      ip: listen_ip
     ],
     secret_key_base: secret_key_base
 

@@ -18,6 +18,12 @@ defmodule BlogWeb.Router do
   end
 
   scope "/", BlogWeb do
+    pipe_through :api
+
+    get "/health", HealthController, :show
+  end
+
+  scope "/", BlogWeb do
     pipe_through :browser
 
     get "/", PostController, :index

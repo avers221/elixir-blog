@@ -1,18 +1,98 @@
 # Blog
 
-To start your Phoenix server:
+Phoenix blog with PostgreSQL, Markdown posts, comments, and account roles.
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+## Operations
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+`Makefile` contains the production operations interface. The application runs as
+an Elixir release managed by a per-user `systemd` service; Docker Compose runs
+PostgreSQL only. A reverse proxy is not included and must terminate HTTPS and
+forward requests to `127.0.0.1:4000`.
 
-Ready to run in production? Please [check our deployment guides](https://phoenix.hexdocs.pm/deployment.html).
+### First-time setup on a Linux host
 
-## Learn more
+Requirements: Docker Engine with the Compose plugin, Elixir/Mix and the
+project's supported Erlang/Elixir versions, `systemd --user`, `curl`, `make`,
+and PostgreSQL client tools in the PostgreSQL container (included in its image).
+Build the release on the same OS/architecture as the target host.
 
-* Official website: https://www.phoenixframework.org/
-* Guides: https://phoenix.hexdocs.pm/overview.html
-* Docs: https://phoenix.hexdocs.pm
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+1. Copy `.env.example` to `.env` and set the production values. Generate secrets,
+   for example:
+
+   ```sh
+   openssl rand -hex 32  # DB_PASSWORD
+   mix phx.gen.secret    # SECRET_KEY_BASE
+   ```
+
+   Set `PHX_HOST` to the public hostname. Keep `PHX_LISTEN_IP=127.0.0.1` when
+   the reverse proxy runs on the same host. Use a long, URL-safe database
+   password, such as the hex output above.
+
+2. Enable the user service to survive logout (one-time host setup; may require
+   administrator privileges):
+
+   ```sh
+   sudo loginctl enable-linger "$USER"
+   ```
+
+3. From the project directory run:
+
+   ```sh
+   make check
+   make install
+   ```
+
+`make install` starts PostgreSQL, builds the production assets and release,
+runs migrations, installs `blog.service` under `systemd --user`, and verifies
+`/health`. It does not seed demo accounts or change user roles.
+
+Production email delivery is not configured in this repository yet. Before
+relying on registration, sign-in links, or email changes on a public server,
+configure a real Swoosh mail adapter and its credentials in `config/runtime.exs`.
+
+### Common operations
+
+```sh
+make start
+make stop
+make restart
+make status
+make health
+make logs                  # app logs
+make logs SERVICE=postgres # database logs
+make update
+make migrate
+```
+
+`make update` builds into a staging directory, takes a database backup, runs
+migrations, activates the release and checks health. Previous release files are
+retained under `_build/prod/rel/`; database migrations are not automatically
+rolled back. Review migration compatibility before deploying schema changes.
+
+Grant/revoke administrator access for an existing account:
+
+```sh
+make admin-grant EMAIL=owner@example.com
+make admin-revoke EMAIL=owner@example.com
+```
+
+### Backups and restore
+
+```sh
+make backup
+make backups
+make backup-check FILE=backups/blog-YYYYMMDDTHHMMSSZ.dump
+make restore CONFIRM=restore FILE=backups/blog-YYYYMMDDTHHMMSSZ.dump
+make backup-prune CONFIRM=prune KEEP_DAYS=30
+```
+
+Backups are compressed PostgreSQL logical dumps in `backups/`, ignored by Git,
+with restrictive file permissions. Restore overwrites the configured database
+and makes a safety backup first. Keep copies off-host as well: local backups do
+not protect against loss of the server or its disk. Schedule `make backup` with
+a host timer/cron and arrange off-site copying separately.
+
+## Development
+
+The operational Makefile intentionally does not include development commands.
+For local development, see `mix help` and the Phoenix documentation.
