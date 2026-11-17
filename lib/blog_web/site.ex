@@ -9,7 +9,7 @@ defmodule BlogWeb.Site do
   Read from the `BLOG_NAME` variable in `.env` / environment
   (see `config/runtime.exs`). Changing it requires a server restart.
   """
-  def site_name, do: Application.fetch_env!(:blog, :site_name)
+  def site_name, do: Application.get_env(:blog, :site_name) || "Blog"
 
   @doc """
   Estimated reading time for a text in whole minutes (words / 200, at least 1).
