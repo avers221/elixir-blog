@@ -1,13 +1,14 @@
-<.form for={@form} id="post-form" action={@action}>
-  <.input field={@form[:title]} type="text" label="Title" />
+<.form for={@form} id="post-form" action={@action} class="editor-form">
+  <.input field={@form[:title]} type="text" label="Title" placeholder="Give your story a title" />
   <.input
     field={@form[:body]}
     type="textarea"
-    label="Body (Markdown supported)"
-    rows={14}
+    label="Your story · Markdown supported"
+    placeholder="Start with an idea..."
+    rows={18}
   />
-  <footer>
-    <.button variant="primary">Save Post</.button>
-    <.button :if={@return_to} href={@return_to}>Cancel</.button>
+  <footer class="form-actions">
+    <.button variant="primary">Save story</.button>
+    <.link :if={@return_to} href={@return_to} class="text-link">Cancel</.link>
   </footer>
 </.form>

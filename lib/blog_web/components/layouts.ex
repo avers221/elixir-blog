@@ -37,54 +37,38 @@ defmodule BlogWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href={~p"/"} class="flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">Blog</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex items-center space-x-1 px-1 sm:space-x-3">
-          <%= if @current_scope && @current_scope.user do %>
-            <li class="hidden items-center gap-2 sm:flex">
-              <span class="max-w-48 truncate text-sm text-base-content/70">
-                {@current_scope.user.email}
-              </span>
-              <span :if={User.admin?(@current_scope.user)} class="badge badge-primary badge-sm">
-                admin
-              </span>
-            </li>
-            <li>
-              <.link href={~p"/users/settings"} class="btn btn-ghost btn-sm">Settings</.link>
-            </li>
-            <li>
-              <.link href={~p"/users/log-out"} method="delete" class="btn btn-ghost btn-sm">
-                Log out
-              </.link>
-            </li>
-          <% else %>
-            <li>
-              <.link href={~p"/users/log-in"} class="btn btn-ghost btn-sm">Log in</.link>
-            </li>
-            <li>
-              <.link href={~p"/users/register"} class="btn btn-primary btn-sm">Register</.link>
-            </li>
-          <% end %>
-          <li>
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="site-header-inner">
+          <a href={~p"/"} class="site-brand">{site_name()}</a>
+          <nav aria-label="Main navigation" class="site-nav">
+            <.link href={~p"/"} class="site-nav-link">Stories</.link>
+            <%= if @current_scope && @current_scope.user do %>
+              <span class="site-user-email">{@current_scope.user.email}</span>
+              <span :if={User.admin?(@current_scope.user)} class="site-admin-badge">admin</span>
+              <.link href={~p"/users/settings"} class="site-nav-link">Settings</.link>
+              <.link href={~p"/users/log-out"} method="delete" class="site-nav-link">Log out</.link>
+            <% else %>
+              <.link href={~p"/users/log-in"} class="site-nav-link">Log in</.link>
+              <.link href={~p"/users/register"} class="site-nav-cta">Write with us</.link>
+            <% end %>
             <.theme_toggle />
-          </li>
-        </ul>
-      </div>
-    </header>
+          </nav>
+        </div>
+      </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+      <main class="site-main">
         {render_slot(@inner_block)}
-      </div>
-    </main>
+      </main>
 
-    <.flash_group flash={@flash} />
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <span>© {Date.utc_today().year} {site_name()}</span>
+          <span>Thoughts, stories &amp; ideas.</span>
+        </div>
+      </footer>
+      <.flash_group flash={@flash} />
+    </div>
     """
   end
 
@@ -144,31 +128,29 @@ defmodule BlogWeb.Layouts do
   """
   def theme_toggle(assigns) do
     ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
-      <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 [[data-theme-source=system]_&]:!left-0 transition-[left]" />
-
+    <div class="theme-toggle" aria-label="Color theme">
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="theme-toggle-button"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="system"
       >
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-computer-desktop-micro" class="size-4" />
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="theme-toggle-button"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
       >
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-sun-micro" class="size-4" />
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="theme-toggle-button"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
       >
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-moon-micro" class="size-4" />
       </button>
     </div>
     """

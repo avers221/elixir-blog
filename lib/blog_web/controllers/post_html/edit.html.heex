@@ -1,16 +1,13 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <.header>
-    Edit Post
-    <:actions>
-      <.button href={~p"/posts/#{@post}"}>
-        <.icon name="hero-arrow-left" /> Back to post
-      </.button>
-    </:actions>
-  </.header>
-
-  <.post_form
-    form={@form}
-    action={~p"/posts/#{@post}"}
-    return_to={~p"/posts/#{@post}"}
-  />
+  <section class="form-page">
+    <.link href={~p"/posts/#{@post}"} class="text-link">
+      <span aria-hidden="true">←</span> Back to story
+    </.link>
+    <p class="eyebrow mt-8">Make it yours</p>
+    <h1 class="form-page-title">Edit story</h1>
+    <p class="form-page-copy">A good story can always become a little better.</p>
+    <div class="form-panel mt-8">
+      <.post_form form={@form} action={~p"/posts/#{@post}"} return_to={~p"/posts/#{@post}"} />
+    </div>
+  </section>
 </Layouts.app>

@@ -1,58 +1,67 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <.header>
-    Listing Posts
-    <:actions>
-      <.button :if={@current_scope} href={~p"/posts/new"}>
-        <.icon name="hero-plus" /> New Post
-      </.button>
-    </:actions>
-  </.header>
+  <section class="blog-intro">
+    <p class="eyebrow">An independent journal</p>
+    <h1 class="blog-intro-title">Stories worth<br class="sm:hidden" /> slowing down for.</h1>
+    <p class="blog-intro-copy">
+      Notes on building, learning, and the small details that make a life.
+    </p>
+    <.link :if={@current_scope} href={~p"/posts/new"} class="text-link mt-5 inline-flex">
+      <.icon name="hero-plus" class="size-4" /> Write a story
+    </.link>
+  </section>
 
-  <%= if Enum.empty?(@posts) do %>
-    <div class="rounded-box border border-base-300 bg-base-200 py-20 text-center transition-colors hover:border-primary/40">
-      <.icon name="hero-pencil-square" class="mx-auto size-12 opacity-40" />
-      <h2 class="mt-4 text-lg font-semibold">No posts yet</h2>
-      <p class="mt-1 text-sm text-base-content/70">
-        Write your first post — it supports Markdown.
-      </p>
-      <div class="mt-6">
-        <.button :if={@current_scope} variant="primary" href={~p"/posts/new"}>
-          <.icon name="hero-plus" /> Write your first post
-        </.button>
-        <.button :if={!@current_scope} variant="primary" href={~p"/users/register"}>
-          Register to write posts
-        </.button>
-      </div>
+  <section aria-labelledby="latest-stories" class="story-list-section">
+    <div class="section-heading">
+      <h2 id="latest-stories">Latest stories</h2>
+      <span class="section-count">{length(@posts)} {if length(@posts) == 1,
+        do: "story",
+        else: "stories"}</span>
     </div>
-  <% else %>
-    <.table id="posts" rows={@posts} row_click={&JS.navigate(~p"/posts/#{&1}")}>
-      <:col :let={post} label="Title">
-        <span class="font-medium">{post.title}</span>
-      </:col>
-      <:col :let={post} label="Preview">
-        <span class="text-base-content/70">{body_preview(post.body)}</span>
-      </:col>
-      <:col :let={post} label="Author">
-        <span class="text-base-content/70">
-          {if post.user, do: post.user.email, else: "—"}
-        </span>
-      </:col>
-      <:col :let={post} label="Created">
-        <span class="whitespace-nowrap text-base-content/70">
-          {Calendar.strftime(post.inserted_at, "%b %d, %Y")}
-        </span>
-      </:col>
-      <:action :let={post}>
-        <div class="sr-only">
-          <.link navigate={~p"/posts/#{post}"}>Show</.link>
-        </div>
-        <div :if={Posts.can_manage_post?(@current_scope, post)} class="flex items-center gap-2">
-          <.link navigate={~p"/posts/#{post}/edit"}>Edit</.link>
-          <.link href={~p"/posts/#{post}"} method="delete" data-confirm="Are you sure?">
-            Delete
-          </.link>
-        </div>
-      </:action>
-    </.table>
-  <% end %>
+
+    <%= if Enum.empty?(@posts) do %>
+      <div class="empty-state">
+        <h3>No stories yet</h3>
+        <p>The first story is waiting to be written.</p>
+        <.link :if={@current_scope} href={~p"/posts/new"} class="text-link mt-4">
+          Write the first one <span aria-hidden="true">→</span>
+        </.link>
+      </div>
+    <% else %>
+      <div id="posts" class="story-list">
+        <article :for={post <- @posts} id={"post-#{post.id}"} class="story-teaser">
+          <div class="story-meta">
+            <span>{if post.user, do: post.user.email, else: "Guest author"}</span>
+            <span class="meta-dot" aria-hidden="true">·</span>
+            <time datetime={DateTime.to_iso8601(post.inserted_at)}>
+              {Calendar.strftime(post.inserted_at, "%B %d, %Y")}
+            </time>
+            <span class="meta-dot" aria-hidden="true">·</span>
+            <span>{reading_time(post.body)} min read</span>
+          </div>
+
+          <h3 class="story-title">
+            <.link navigate={~p"/posts/#{post}"}>{post.title}</.link>
+          </h3>
+
+          <p class="story-excerpt">{body_preview(post.body)}</p>
+
+          <div class="story-bottom">
+            <.link navigate={~p"/posts/#{post}"} class="text-link">
+              Read story <span aria-hidden="true">→</span>
+            </.link>
+            <div :if={Posts.can_manage_post?(@current_scope, post)} class="story-actions">
+              <.link navigate={~p"/posts/#{post}/edit"}>Edit</.link>
+              <.link
+                href={~p"/posts/#{post}"}
+                method="delete"
+                data-confirm="Delete this story?"
+              >
+                Delete
+              </.link>
+            </div>
+          </div>
+        </article>
+      </div>
+    <% end %>
+  </section>
 </Layouts.app>

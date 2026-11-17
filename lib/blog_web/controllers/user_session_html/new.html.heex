@@ -1,76 +1,69 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="mx-auto max-w-sm space-y-4">
-    <div class="text-center">
-      <.header>
-        <p>Log in</p>
-        <:subtitle>
-          <%= if @current_scope do %>
-            You need to reauthenticate to perform sensitive actions on your account.
-          <% else %>
-            Don't have an account? <.link
-              navigate={~p"/users/register"}
-              class="font-semibold text-primary hover:underline"
-              phx-no-format
-            >Sign up</.link> for an account now.
-          <% end %>
-        </:subtitle>
-      </.header>
+  <section class="auth-page">
+    <p class="eyebrow">Welcome back</p>
+    <h1 class="form-page-title">Log in</h1>
+    <p class="form-page-copy">
+      <%= if @current_scope do %>
+        Please confirm your identity to continue.
+      <% else %>
+        New here? <.link navigate={~p"/users/register"} class="text-link">Create an account</.link>.
+      <% end %>
+    </p>
+
+    <div :if={local_mail_adapter?()} class="mail-notice">
+      <.icon name="hero-information-circle" class="size-5 shrink-0" />
+      <span>Local email is enabled. Check
+      <.link href="/dev/mailbox" class="text-link">the dev mailbox</.link>
+      for sign-in links.</span>
     </div>
 
-    <div :if={local_mail_adapter?()} class="alert alert-info">
-      <.icon name="hero-information-circle" class="size-6 shrink-0" />
-      <div>
-        <p>You are running the local mail adapter.</p>
-        <p>
-          To see sent emails, visit <.link href="/dev/mailbox" class="underline">the mailbox page</.link>.
-        </p>
-      </div>
-    </div>
+    <div class="form-panel mt-8">
+      <.form for={@magic_form} id="login_form_magic" action={~p"/users/log-in"} class="auth-form">
+        <.input
+          readonly={!!@current_scope}
+          field={@magic_form[:email]}
+          type="email"
+          label="Email address"
+          autocomplete="username"
+          spellcheck="false"
+          required
+        />
+        <.button class="btn btn-primary w-full">Email me a sign-in link</.button>
+      </.form>
 
-    <.form for={@magic_form} id="login_form_magic" action={~p"/users/log-in"}>
-      <.input
-        readonly={!!@current_scope}
-        field={@magic_form[:email]}
-        type="email"
-        label="Email"
-        autocomplete="username"
-        spellcheck="false"
-        required
-      />
-      <.button class="btn btn-primary w-full">
-        Log in with email <span aria-hidden="true">→</span>
-      </.button>
-    </.form>
+      <div class="auth-divider"><span>or use your password</span></div>
 
-    <div class="divider">or</div>
-
-    <.form for={@password_form} id="login_form_password" action={~p"/users/log-in"}>
-      <.input
-        readonly={!!@current_scope}
-        field={@password_form[:email]}
-        type="email"
-        label="Email"
-        autocomplete="username"
-        spellcheck="false"
-        required
-      />
-      <.input
-        field={@password_form[:password]}
-        type="password"
-        label="Password"
-        autocomplete="current-password"
-        spellcheck="false"
-      />
-      <.button
-        class="btn btn-primary w-full"
-        name={@password_form[:remember_me].name}
-        value="true"
+      <.form
+        for={@password_form}
+        id="login_form_password"
+        action={~p"/users/log-in"}
+        class="auth-form"
       >
-        Log in and stay logged in <span aria-hidden="true">→</span>
-      </.button>
-      <.button class="btn btn-primary btn-soft w-full mt-2">
-        Log in only this time
-      </.button>
-    </.form>
-  </div>
+        <.input
+          readonly={!!@current_scope}
+          field={@password_form[:email]}
+          type="email"
+          label="Email address"
+          autocomplete="username"
+          spellcheck="false"
+          required
+        />
+        <.input
+          field={@password_form[:password]}
+          type="password"
+          label="Password"
+          autocomplete="current-password"
+          spellcheck="false"
+        />
+        <.button
+          class="btn btn-primary w-full"
+          name={@password_form[:remember_me].name}
+          value="true"
+        >
+          Log in and stay signed in
+        </.button>
+        <.button class="btn btn-primary btn-soft w-full mt-2">Log in this time only</.button>
+      </.form>
+    </div>
+  </section>
 </Layouts.app>

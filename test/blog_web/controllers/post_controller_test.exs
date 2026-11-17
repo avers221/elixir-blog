@@ -14,23 +14,24 @@ defmodule BlogWeb.PostControllerTest do
     test "lists all posts publicly", %{conn: conn} do
       _post = post_fixture()
       conn = get(conn, ~p"/posts")
-      assert html_response(conn, 200) =~ "Listing Posts"
+      assert html_response(conn, 200) =~ "Latest stories"
       assert html_response(conn, 200) =~ "some title"
     end
 
     test "shows empty state when there are no posts", %{conn: conn} do
       conn = get(conn, ~p"/posts")
-      assert html_response(conn, 200) =~ "No posts yet"
+      assert html_response(conn, 200) =~ "No stories yet"
     end
 
-    test "hides New Post button for anonymous visitors", %{conn: conn} do
+    test "hides the write link for anonymous visitors", %{conn: conn} do
       conn = get(conn, ~p"/posts")
-      refute html_response(conn, 200) =~ "New Post"
+      refute html_response(conn, 200) =~ ~p"/posts/new"
     end
 
-    test "shows New Post button and post author for logged-in users", %{conn: conn} do
+    test "shows the write link for logged-in users", %{conn: conn} do
       conn = conn |> log_in_user(user_fixture()) |> get(~p"/posts")
-      assert html_response(conn, 200) =~ "New Post"
+      assert html_response(conn, 200) =~ "Write a story"
+      assert html_response(conn, 200) =~ ~p"/posts/new"
     end
   end
 
@@ -74,7 +75,7 @@ defmodule BlogWeb.PostControllerTest do
 
     test "renders form for logged-in users", %{conn: conn} do
       conn = conn |> log_in_user(user_fixture()) |> get(~p"/posts/new")
-      assert html_response(conn, 200) =~ "New Post"
+      assert html_response(conn, 200) =~ ~s(id="post-form")
     end
   end
 
@@ -97,7 +98,7 @@ defmodule BlogWeb.PostControllerTest do
 
     test "renders errors when data is invalid", %{conn: conn} do
       conn = conn |> log_in_user(user_fixture()) |> post(~p"/posts", post: @invalid_attrs)
-      assert html_response(conn, 200) =~ "New Post"
+      assert html_response(conn, 200) =~ "Write a story"
     end
   end
 
@@ -106,12 +107,12 @@ defmodule BlogWeb.PostControllerTest do
 
     test "renders form for the author", %{conn: conn, post: post} do
       conn = conn |> log_in_user(post.user) |> get(~p"/posts/#{post}/edit")
-      assert html_response(conn, 200) =~ "Edit Post"
+      assert html_response(conn, 200) =~ "Edit story"
     end
 
     test "renders form for an admin", %{conn: conn, post: post} do
       conn = conn |> log_in_user(admin_user_fixture()) |> get(~p"/posts/#{post}/edit")
-      assert html_response(conn, 200) =~ "Edit Post"
+      assert html_response(conn, 200) =~ "Edit story"
     end
 
     test "redirects anonymous visitors to the log-in page", %{conn: conn, post: post} do
@@ -149,7 +150,7 @@ defmodule BlogWeb.PostControllerTest do
 
     test "renders errors when data is invalid", %{conn: conn, post: post} do
       conn = conn |> log_in_user(post.user) |> put(~p"/posts/#{post}", post: @invalid_attrs)
-      assert html_response(conn, 200) =~ "Edit Post"
+      assert html_response(conn, 200) =~ "Edit story"
     end
 
     test "redirects anonymous visitors to the log-in page", %{conn: conn, post: post} do

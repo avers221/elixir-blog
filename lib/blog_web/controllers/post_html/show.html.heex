@@ -1,90 +1,89 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <.header>
-    {@post.title}
-    <:subtitle>Published {@post.inserted_at |> Calendar.strftime("%B %d, %Y")}</:subtitle>
-    <:actions>
-      <.button href={~p"/posts"}>
-        <.icon name="hero-arrow-left" />
-      </.button>
-      <.button
-        :if={Posts.can_manage_post?(@current_scope, @post)}
-        variant="primary"
-        navigate={~p"/posts/#{@post}/edit"}
-      >
-        <.icon name="hero-pencil-square" /> Edit
-      </.button>
-      <.link
-        :if={Posts.can_manage_post?(@current_scope, @post)}
-        href={~p"/posts/#{@post}"}
-        method="delete"
-        data-confirm="Are you sure?"
-        class="btn btn-error"
-      >
-        <.icon name="hero-trash" /> Delete
+  <article class="article-page">
+    <nav aria-label="Breadcrumb" class="article-back">
+      <.link navigate={~p"/"} class="text-link">
+        <span aria-hidden="true">←</span> All stories
       </.link>
-    </:actions>
-  </.header>
+    </nav>
 
-  <article class="markdown-content">
-    {markdown_to_html(@post.body)}
+    <header class="article-header">
+      <p class="eyebrow">
+        A story by {if @post.user, do: @post.user.email, else: "Guest author"}
+      </p>
+      <h1 class="article-title">{@post.title}</h1>
+      <div class="story-meta article-meta">
+        <time datetime={DateTime.to_iso8601(@post.inserted_at)}>
+          {Calendar.strftime(@post.inserted_at, "%B %d, %Y")}
+        </time>
+        <span class="meta-dot" aria-hidden="true">·</span>
+        <span>{reading_time(@post.body)} min read</span>
+      </div>
+
+      <div :if={Posts.can_manage_post?(@current_scope, @post)} class="article-actions">
+        <.link navigate={~p"/posts/#{@post}/edit"} class="text-link">
+          <.icon name="hero-pencil-square" class="size-4" /> Edit story
+        </.link>
+        <.link
+          href={~p"/posts/#{@post}"}
+          method="delete"
+          data-confirm="Delete this story?"
+          class="text-link text-error"
+        >
+          <.icon name="hero-trash" class="size-4" /> Delete
+        </.link>
+      </div>
+    </header>
+
+    <div class="article-rule"></div>
+    <div class="markdown-content">
+      {markdown_to_html(@post.body)}
+    </div>
   </article>
 
-  <section id="comments" class="mt-12">
-    <h2 class="text-lg font-semibold">Comments ({length(@comments)})</h2>
-
-    <div class="mt-4 space-y-3">
-      <%= for comment <- @comments do %>
-        <div
-          id={"comment-#{comment.id}"}
-          class="rounded-box border border-base-300 bg-base-200 p-4 transition-colors hover:border-base-300/80"
-        >
-          <div class="flex items-center justify-between gap-4">
-            <span class="font-medium">{Comment.author_name(comment)}</span>
-            <div class="flex items-center gap-3 text-xs">
-              <span class="text-base-content/60">
-                {Calendar.strftime(comment.inserted_at, "%b %d, %Y")}
-              </span>
-              <.link
-                :if={Posts.can_delete_comment?(@current_scope, comment, @post)}
-                href={~p"/posts/#{@post}/comments/#{comment}"}
-                method="delete"
-                data-confirm="Delete this comment?"
-                class="text-error/80 hover:text-error transition-opacity"
-              >
-                Delete
-              </.link>
-            </div>
-          </div>
-          <p class="mt-2 whitespace-pre-line">{comment.body}</p>
-        </div>
-      <% end %>
+  <section id="comments" class="comments-section">
+    <div class="section-heading">
+      <h2>Discussion</h2>
+      <span class="section-count">{length(@comments)} {if length(@comments) == 1,
+        do: "comment",
+        else: "comments"}</span>
     </div>
 
-    <div class="mt-8 rounded-box border border-base-300 bg-base-200 p-6">
+    <div :if={@comments != []} class="comment-list">
+      <article :for={comment <- @comments} id={"comment-#{comment.id}"} class="comment-item">
+        <div class="comment-header">
+          <span class="comment-author">{Comment.author_name(comment)}</span>
+          <time datetime={DateTime.to_iso8601(comment.inserted_at)} class="comment-date">
+            {Calendar.strftime(comment.inserted_at, "%b %d, %Y")}
+          </time>
+          <.link
+            :if={Posts.can_delete_comment?(@current_scope, comment, @post)}
+            href={~p"/posts/#{@post}/comments/#{comment}"}
+            method="delete"
+            data-confirm="Delete this comment?"
+            class="comment-delete"
+          >
+            Delete
+          </.link>
+        </div>
+        <p class="comment-body">{comment.body}</p>
+      </article>
+    </div>
+
+    <div class="comment-form-panel">
       <%= if @current_scope do %>
-        <h3 class="font-semibold">Add a comment</h3>
-        <.form
-          for={@comment_form}
-          id="comment-form"
-          action={~p"/posts/#{@post}/comments"}
-          class="mt-4"
-        >
-          <.input field={@comment_form[:body]} type="textarea" label="Comment" rows={4} />
+        <h3 class="form-panel-title">Leave a thought</h3>
+        <.form for={@comment_form} id="comment-form" action={~p"/posts/#{@post}/comments"}>
+          <.input field={@comment_form[:body]} type="textarea" label="Your comment" rows={4} />
           <div class="mt-4">
-            <.button variant="primary">Add comment</.button>
+            <.button variant="primary">Post comment</.button>
           </div>
         </.form>
       <% else %>
-        <h3 class="font-semibold">Add a comment</h3>
-        <p class="mt-2 text-sm text-base-content/70">
-          <.link href={~p"/users/log-in"} class="link link-hover font-medium text-primary">
-            Log in
-          </.link>
-          or
-          <.link href={~p"/users/register"} class="link link-hover font-medium text-primary">
-            register
-          </.link>
-          to join the discussion.
+        <h3 class="form-panel-title">Join the conversation</h3>
+        <p class="form-panel-copy">
+          <.link href={~p"/users/log-in"} class="text-link">Log in</.link>
+          or <.link href={~p"/users/register"} class="text-link">create an account</.link>
+          to leave a comment.
         </p>
       <% end %>
     </div>

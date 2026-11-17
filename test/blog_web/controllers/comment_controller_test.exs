@@ -26,7 +26,7 @@ defmodule BlogWeb.CommentControllerTest do
 
       conn = get(conn, ~p"/posts/#{post}")
       assert html_response(conn, 200) =~ "nice post"
-      assert html_response(conn, 200) =~ "Comments (1)"
+      assert html_response(conn, 200) =~ "1 comment"
     end
 
     test "renders errors when comment data is invalid", %{conn: conn, post: post} do
@@ -35,7 +35,7 @@ defmodule BlogWeb.CommentControllerTest do
         |> log_in_user(user_fixture())
         |> post(~p"/posts/#{post}/comments", comment: %{body: nil})
 
-      assert html_response(conn, 200) =~ "Add a comment"
+      assert html_response(conn, 200) =~ "Leave a thought"
     end
   end
 

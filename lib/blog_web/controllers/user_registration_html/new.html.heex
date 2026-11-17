@@ -1,32 +1,26 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="mx-auto max-w-sm">
-    <div class="text-center">
-      <.header>
-        Register for an account
-        <:subtitle>
-          Already registered?
-          <.link navigate={~p"/users/log-in"} class="font-semibold text-primary hover:underline">
-            Log in
-          </.link>
-          to your account now.
-        </:subtitle>
-      </.header>
+  <section class="auth-page">
+    <p class="eyebrow">Become part of the journal</p>
+    <h1 class="form-page-title">Create an account</h1>
+    <p class="form-page-copy">
+      Already have an account? <.link navigate={~p"/users/log-in"} class="text-link">Log in</.link>.
+    </p>
+
+    <div class="form-panel mt-8">
+      <.form for={@form} id="registration-form" action={~p"/users/register"} class="auth-form">
+        <.input
+          field={@form[:email]}
+          type="email"
+          label="Email address"
+          autocomplete="username"
+          spellcheck="false"
+          required
+          autofocus
+        />
+        <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
+          Create your account
+        </.button>
+      </.form>
     </div>
-
-    <.form for={@form} id="registration-form" action={~p"/users/register"}>
-      <.input
-        field={@form[:email]}
-        type="email"
-        label="Email"
-        autocomplete="username"
-        spellcheck="false"
-        required
-        autofocus
-      />
-
-      <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
-        Create an account
-      </.button>
-    </.form>
-  </div>
+  </section>
 </Layouts.app>
