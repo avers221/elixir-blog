@@ -66,6 +66,7 @@ defmodule Blog.MixProject do
        compile: false,
        depth: 1},
       {:dotenvy, "~> 1.1"},
+      {:mdex, "~> 0.14"},
       {:swoosh, "~> 1.16"},
       {:req, "~> 0.5"},
       {:telemetry_metrics, "~> 1.0"},
