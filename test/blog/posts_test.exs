@@ -15,6 +15,14 @@ defmodule Blog.PostsTest do
       assert Posts.list_posts() == [post]
     end
 
+    test "list_posts/0 orders posts newest first" do
+      _old = post_fixture(%{title: "old post"})
+      _new = post_fixture(%{title: "new post"})
+
+      assert [%Post{title: "new post"}, %Post{title: "old post"}] =
+               Posts.list_posts()
+    end
+
     test "get_post!/1 returns the post with given id" do
       post = post_fixture()
       assert Posts.get_post!(post.id) == post

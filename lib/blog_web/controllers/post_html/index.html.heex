@@ -8,23 +8,43 @@
     </:actions>
   </.header>
 
-  <.table id="posts" rows={@posts} row_click={&JS.navigate(~p"/posts/#{&1}")}>
-    <:col :let={post} label="Title">
-      <span class="font-medium">{post.title}</span>
-    </:col>
-    <:col :let={post} label="Preview">
-      <span class="text-base-content/70">{body_preview(post.body)}</span>
-    </:col>
-    <:action :let={post}>
-      <div class="sr-only">
-        <.link navigate={~p"/posts/#{post}"}>Show</.link>
+  <%= if Enum.empty?(@posts) do %>
+    <div class="rounded-box border border-base-300 bg-base-200 py-20 text-center transition-colors hover:border-primary/40">
+      <.icon name="hero-pencil-square" class="mx-auto size-12 opacity-40" />
+      <h2 class="mt-4 text-lg font-semibold">No posts yet</h2>
+      <p class="mt-1 text-sm text-base-content/70">
+        Write your first post — it supports Markdown.
+      </p>
+      <div class="mt-6">
+        <.button variant="primary" href={~p"/posts/new"}>
+          <.icon name="hero-plus" /> Write your first post
+        </.button>
       </div>
-      <.link navigate={~p"/posts/#{post}/edit"}>Edit</.link>
-    </:action>
-    <:action :let={post}>
-      <.link href={~p"/posts/#{post}"} method="delete" data-confirm="Are you sure?">
-        Delete
-      </.link>
-    </:action>
-  </.table>
+    </div>
+  <% else %>
+    <.table id="posts" rows={@posts} row_click={&JS.navigate(~p"/posts/#{&1}")}>
+      <:col :let={post} label="Title">
+        <span class="font-medium">{post.title}</span>
+      </:col>
+      <:col :let={post} label="Preview">
+        <span class="text-base-content/70">{body_preview(post.body)}</span>
+      </:col>
+      <:col :let={post} label="Created">
+        <span class="whitespace-nowrap text-base-content/70">
+          {Calendar.strftime(post.inserted_at, "%b %d, %Y")}
+        </span>
+      </:col>
+      <:action :let={post}>
+        <div class="sr-only">
+          <.link navigate={~p"/posts/#{post}"}>Show</.link>
+        </div>
+        <.link navigate={~p"/posts/#{post}/edit"}>Edit</.link>
+      </:action>
+      <:action :let={post}>
+        <.link href={~p"/posts/#{post}"} method="delete" data-confirm="Are you sure?">
+          Delete
+        </.link>
+      </:action>
+    </.table>
+  <% end %>
 </Layouts.app>

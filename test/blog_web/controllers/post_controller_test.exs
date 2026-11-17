@@ -12,6 +12,11 @@ defmodule BlogWeb.PostControllerTest do
       conn = get(conn, ~p"/posts")
       assert html_response(conn, 200) =~ "Listing Posts"
     end
+
+    test "shows empty state when there are no posts", %{conn: conn} do
+      conn = get(conn, ~p"/posts")
+      assert html_response(conn, 200) =~ "No posts yet"
+    end
   end
 
   describe "new post" do
