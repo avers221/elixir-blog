@@ -82,6 +82,36 @@ defmodule BlogWeb.PostControllerTest do
     end
   end
 
+  describe "comments" do
+    setup [:create_post]
+
+    test "adds a comment to a post", %{conn: conn, post: post} do
+      conn =
+        post(conn, ~p"/posts/#{post}/comments", comment: %{author: "Ann", body: "nice"})
+
+      assert redirected_to(conn) == ~p"/posts/#{post}"
+
+      conn = get(conn, ~p"/posts/#{post}")
+      assert html_response(conn, 200) =~ "nice"
+      assert html_response(conn, 200) =~ "Comments (1)"
+    end
+
+    test "renders errors when comment data is invalid", %{conn: conn, post: post} do
+      conn = post(conn, ~p"/posts/#{post}/comments", comment: %{body: nil})
+      assert html_response(conn, 200) =~ "Add a comment"
+    end
+
+    test "deletes chosen comment", %{conn: conn, post: post} do
+      comment = comment_fixture(post, %{body: "comment to delete"})
+
+      conn = delete(conn, ~p"/posts/#{post}/comments/#{comment}")
+      assert redirected_to(conn) == ~p"/posts/#{post}"
+
+      conn = get(conn, ~p"/posts/#{post}")
+      refute html_response(conn, 200) =~ "comment to delete"
+    end
+  end
+
   defp create_post(_) do
     post = post_fixture()
 

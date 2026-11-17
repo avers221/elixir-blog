@@ -18,4 +18,19 @@ defmodule Blog.PostsFixtures do
 
     post
   end
+
+  @doc """
+  Generate a comment for the given post.
+  """
+  def comment_fixture(post, attrs \\ %{}) do
+    {:ok, comment} =
+      attrs
+      |> Enum.into(%{
+        author: "some author",
+        body: "some body"
+      })
+      |> then(&Blog.Posts.create_comment(post, &1))
+
+    comment
+  end
 end

@@ -23,4 +23,51 @@
   <article class="markdown-content">
     {markdown_to_html(@post.body)}
   </article>
+
+  <section id="comments" class="mt-12">
+    <h2 class="text-lg font-semibold">Comments ({length(@comments)})</h2>
+
+    <div class="mt-4 space-y-3">
+      <%= for comment <- @comments do %>
+        <div
+          id={"comment-#{comment.id}"}
+          class="rounded-box border border-base-300 bg-base-200 p-4 transition-colors hover:border-base-300/80"
+        >
+          <div class="flex items-center justify-between gap-4">
+            <span class="font-medium">{comment.author || "Anonymous"}</span>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="text-base-content/60">
+                {Calendar.strftime(comment.inserted_at, "%b %d, %Y")}
+              </span>
+              <.link
+                href={~p"/posts/#{@post}/comments/#{comment}"}
+                method="delete"
+                data-confirm="Delete this comment?"
+                class="text-error/80 hover:text-error transition-opacity"
+              >
+                Delete
+              </.link>
+            </div>
+          </div>
+          <p class="mt-2 whitespace-pre-line">{comment.body}</p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-8 rounded-box border border-base-300 bg-base-200 p-6">
+      <h3 class="font-semibold">Add a comment</h3>
+      <.form
+        for={@comment_form}
+        id="comment-form"
+        action={~p"/posts/#{@post}/comments"}
+        class="mt-4"
+      >
+        <.input field={@comment_form[:author]} type="text" label="Name (optional)" />
+        <.input field={@comment_form[:body]} type="textarea" label="Comment" rows={4} />
+        <div class="mt-4">
+          <.button variant="primary">Add comment</.button>
+        </div>
+      </.form>
+    </div>
+  </section>
 </Layouts.app>

@@ -4,6 +4,7 @@ defmodule BlogWeb.PostController do
   import Phoenix.Component, only: [to_form: 1]
 
   alias Blog.Posts
+  alias Blog.Posts.Comment
   alias Blog.Posts.Post
 
   def index(conn, _params) do
@@ -30,7 +31,14 @@ defmodule BlogWeb.PostController do
 
   def show(conn, %{"id" => id}) do
     post = Posts.get_post!(id)
-    render(conn, :show, post: post)
+    comments = Posts.list_comments(post)
+    comment_form = to_form(Posts.change_comment(%Comment{}))
+
+    render(conn, :show,
+      post: post,
+      comments: comments,
+      comment_form: comment_form
+    )
   end
 
   def edit(conn, %{"id" => id}) do

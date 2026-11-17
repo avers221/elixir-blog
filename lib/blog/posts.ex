@@ -7,6 +7,7 @@ defmodule Blog.Posts do
   alias Blog.Repo
 
   alias Blog.Posts.Post
+  alias Blog.Posts.Comment
 
   @doc """
   Returns the list of posts.
@@ -100,5 +101,59 @@ defmodule Blog.Posts do
   """
   def change_post(%Post{} = post, attrs \\ %{}) do
     Post.changeset(post, attrs)
+  end
+
+  @doc """
+  Returns the list of comments for a post, oldest first.
+
+  ## Examples
+
+      iex> list_comments(post)
+      [%Comment{}, ...]
+
+  """
+  def list_comments(%Post{} = post) do
+    Repo.all(
+      from(c in Comment,
+        where: c.post_id == ^post.id,
+        order_by: [asc: c.inserted_at, asc: c.id]
+      )
+    )
+  end
+
+  @doc """
+  Gets a single comment.
+
+  Raises `Ecto.NoResultsError` if the Comment does not exist.
+  """
+  def get_comment!(id), do: Repo.get!(Comment, id)
+
+  @doc """
+  Creates a comment attached to the given post.
+
+  ## Examples
+
+      iex> create_comment(post, %{body: "nice post"})
+      {:ok, %Comment{}}
+
+  """
+  def create_comment(%Post{} = post, attrs) do
+    %Comment{post_id: post.id}
+    |> Comment.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Deletes a comment.
+  """
+  def delete_comment(%Comment{} = comment) do
+    Repo.delete(comment)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking comment changes.
+  """
+  def change_comment(%Comment{} = comment, attrs \\ %{}) do
+    Comment.changeset(comment, attrs)
   end
 end

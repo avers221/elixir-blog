@@ -66,4 +66,69 @@ defmodule Blog.PostsTest do
       assert %Ecto.Changeset{} = Posts.change_post(post)
     end
   end
+
+  describe "comments" do
+    alias Blog.Posts.Comment
+
+    import Blog.PostsFixtures
+
+    @invalid_comment_attrs %{body: nil}
+    @valid_comment_attrs %{author: "some author", body: "some body"}
+
+    test "list_comments/1 returns post comments oldest first" do
+      post = post_fixture()
+      _second = comment_fixture(post, %{body: "second"})
+      _first = comment_fixture(post, %{body: "first"})
+
+      assert [%Comment{body: "second"}, %Comment{body: "first"}] =
+               Posts.list_comments(post)
+    end
+
+    test "list_comments/1 does not return comments of other posts" do
+      post = post_fixture()
+      other_post = post_fixture(%{title: "other"})
+      comment_fixture(post)
+
+      assert Posts.list_comments(other_post) == []
+    end
+
+    test "create_comment/2 with valid data creates a comment" do
+      post = post_fixture()
+
+      assert {:ok, %Comment{} = comment} =
+               Posts.create_comment(post, @valid_comment_attrs)
+
+      assert comment.author == "some author"
+      assert comment.body == "some body"
+      assert comment.post_id == post.id
+    end
+
+    test "create_comment/2 allows nil author" do
+      post = post_fixture()
+
+      assert {:ok, %Comment{author: nil}} =
+               Posts.create_comment(post, %{body: "anonymous"})
+    end
+
+    test "create_comment/2 with invalid data returns error changeset" do
+      post = post_fixture()
+
+      assert {:error, %Ecto.Changeset{}} =
+               Posts.create_comment(post, @invalid_comment_attrs)
+    end
+
+    test "delete_comment/1 deletes the comment" do
+      post = post_fixture()
+      comment = comment_fixture(post)
+
+      assert {:ok, %Comment{}} = Posts.delete_comment(comment)
+      assert Posts.list_comments(post) == []
+    end
+
+    test "change_comment/1 returns a comment changeset" do
+      post = post_fixture()
+      comment = comment_fixture(post)
+      assert %Ecto.Changeset{} = Posts.change_comment(comment)
+    end
+  end
 end
