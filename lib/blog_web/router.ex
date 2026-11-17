@@ -17,7 +17,9 @@ defmodule BlogWeb.Router do
   scope "/", BlogWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    get "/", PostController, :index
+
+    resources "/posts", PostController
   end
 
   # Other scopes may use custom stacks.

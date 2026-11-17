@@ -1,0 +1,26 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    {@post.title}
+    <:subtitle>Published {@post.inserted_at |> Calendar.strftime("%B %d, %Y")}</:subtitle>
+    <:actions>
+      <.button href={~p"/posts"}>
+        <.icon name="hero-arrow-left" />
+      </.button>
+      <.button variant="primary" navigate={~p"/posts/#{@post}/edit"}>
+        <.icon name="hero-pencil-square" /> Edit
+      </.button>
+      <.link
+        href={~p"/posts/#{@post}"}
+        method="delete"
+        data-confirm="Are you sure?"
+        class="btn btn-error"
+      >
+        <.icon name="hero-trash" /> Delete
+      </.link>
+    </:actions>
+  </.header>
+
+  <article class="markdown-content">
+    {markdown_to_html(@post.body)}
+  </article>
+</Layouts.app>

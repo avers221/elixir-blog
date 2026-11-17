@@ -1,0 +1,20 @@
+defmodule Blog.Posts.Post do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  schema "posts" do
+    field :title, :string
+    field :body, :string
+
+    timestamps(type: :utc_datetime)
+  end
+
+  @doc false
+  def changeset(post, attrs) do
+    post
+    |> cast(attrs, [:title, :body])
+    |> validate_required([:title, :body])
+    |> validate_length(:title, min: 1, max: 200)
+    |> validate_length(:body, min: 1, max: 50_000)
+  end
+end

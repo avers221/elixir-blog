@@ -1,0 +1,13 @@
+<.form for={@form} id="post-form" action={@action}>
+  <.input field={@form[:title]} type="text" label="Title" />
+  <.input
+    field={@form[:body]}
+    type="textarea"
+    label="Body (Markdown supported)"
+    rows={14}
+  />
+  <footer>
+    <.button variant="primary">Save Post</.button>
+    <.button :if={@return_to} href={@return_to}>Cancel</.button>
+  </footer>
+</.form>

@@ -1,0 +1,16 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    Edit Post
+    <:actions>
+      <.button href={~p"/posts/#{@post}"}>
+        <.icon name="hero-arrow-left" /> Back to post
+      </.button>
+    </:actions>
+  </.header>
+
+  <.post_form
+    form={@form}
+    action={~p"/posts/#{@post}"}
+    return_to={~p"/posts/#{@post}"}
+  />
+</Layouts.app>
