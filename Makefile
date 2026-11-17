@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help check install start stop restart status health logs update migrate backup backups backup-check restore backup-prune admin-grant admin-revoke _require-env _build-release _activate-release _wait-db _install-service _ensure-backup-dir _admin-action
+.PHONY: help check install dev dev-stop start stop restart status health logs update migrate backup backups backup-check restore backup-prune admin-grant admin-revoke _require-env _build-release _activate-release _wait-db _install-service _ensure-backup-dir _admin-action
 
 COMPOSE ?= docker compose
 COMPOSE_FILE ?= docker-compose.yaml
@@ -51,6 +51,15 @@ install: check ## First-time setup: start PostgreSQL, build release, migrate, in
 	@$(MAKE) --no-print-directory _install-service
 	@systemctl --user enable --now "$(SERVICE_NAME)"
 	@$(MAKE) --no-print-directory health
+
+dev: ## Start local development: PostgreSQL in Docker and Phoenix via Mix
+	@$(COMPOSE) --env-file "$(ENV_FILE)" -f "$(COMPOSE_FILE)" up -d postgres
+	@$(MAKE) --no-print-directory _wait-db
+	@mix ecto.migrate
+	@mix phx.server
+
+dev-stop: ## Stop the local PostgreSQL service (stop foreground Phoenix with Ctrl+C first)
+	@$(COMPOSE) --env-file "$(ENV_FILE)" -f "$(COMPOSE_FILE)" stop postgres
 
 start: ## Start database and application service
 	@$(COMPOSE) --env-file "$(ENV_FILE)" -f "$(COMPOSE_FILE)" up -d postgres

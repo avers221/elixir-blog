@@ -94,5 +94,12 @@ a host timer/cron and arrange off-site copying separately.
 
 ## Development
 
-The operational Makefile intentionally does not include development commands.
-For local development, see `mix help` and the Phoenix documentation.
+For local development, configure `.env` with local database settings and run
+`make dev`. It starts the PostgreSQL Compose service, waits for the database,
+runs pending development migrations, then starts Phoenix with `mix phx.server`
+in the foreground. Press `Ctrl+C` in that terminal to stop Phoenix, then run
+`make dev-stop` to stop PostgreSQL. Use `make start`/`make stop` only for the
+installed production release managed by `systemd --user`.
+
+On a fresh checkout, run `mix setup` first to fetch dependencies and install
+assets. For local database commands and other Mix tasks, see `mix help`.
