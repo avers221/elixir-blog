@@ -478,3 +478,11 @@ And **never** do this:
 <!-- phoenix:liveview-end -->
 
 <!-- usage-rules-end -->
+
+## Blog-specific rules
+
+- Keep post reading public, but require authentication to create or manage posts and comments. Before updating or deleting a post, authorize the current user as its author or an admin. A comment may be deleted only by its author, the post's author, or an admin.
+- Derive post and comment ownership (`user_id` and `post_id`) from the authenticated scope and the loaded post, never from untrusted request parameters. Never allow public registration or account settings to assign or change a user's role.
+- Store post bodies as Markdown source and render them through `BlogWeb.PostHTML.markdown_to_html/1`. Do not mark user-provided content as safe HTML or bypass the Markdown renderer.
+- Preserve the separation of public and authenticated routes in `BlogWeb.Router`. Put new routes in the appropriate pipeline/scope, and keep static routes ahead of parameterized routes when route matching could otherwise capture them.
+- For authorization changes, test guest, author, another user, and admin access as applicable. For Markdown rendering changes, test that unsafe raw HTML cannot execute or pass through unfiltered.
