@@ -101,5 +101,22 @@ in the foreground. Press `Ctrl+C` in that terminal to stop Phoenix, then run
 `make dev-stop` to stop PostgreSQL. Use `make start`/`make stop` only for the
 installed production release managed by `systemd --user`.
 
-On a fresh checkout, run `mix setup` first to fetch dependencies and install
-assets. For local database commands and other Mix tasks, see `mix help`.
+On a fresh checkout, create `priv/repo/seeds.credentials.json` before running
+`mix setup` (which runs the seed script). The file is intentionally gitignored.
+It must contain a non-empty JSON array of objects with `email`, `password`, and
+`role` fields. Passwords must be 12–72 bytes; valid roles are `user` and
+`admin`. Include at least one admin and one regular user because the seed script
+uses them for demo comments and posts. Each time the seeds run, configured
+passwords and roles are applied to these accounts. For example, use your own
+local-only test values:
+
+```json
+[
+  {"email": "admin@example.com", "password": "<local-test-password>", "role": "admin"},
+  {"email": "demo@example.com", "password": "<another-local-test-password>", "role": "user"}
+]
+```
+
+Do not put production credentials in the seed file. The seed script fails with
+a clear error if the file is missing or invalid. For local database commands
+and other Mix tasks, see `mix help`.
